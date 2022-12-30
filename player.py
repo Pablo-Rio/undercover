@@ -1,8 +1,10 @@
 class Player:
-    def __init__(self, name, role, secret_word):
-        self.role = role
+    def __init__(self, name, number):
+        self.role = None
         self.name = name
-        self.secret_word = secret_word
+        self.number = number
+        self.secret_word = None
+        self.score = 0
         self.is_eliminated = False
 
     def eliminate(self):
