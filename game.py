@@ -6,7 +6,7 @@ from player import Player
 def first_game():
     players = []
     while True:
-        num_players = int(input("Combien y a-t-il de joueurs ? "))
+        num_players = input_number("Combien y a-t-il de joueurs ? ")
         if num_players < 3:
             print("Il faut au moins 3 joueurs !")
         else:
@@ -14,15 +14,21 @@ def first_game():
     print(f"{num_players} ? Il me faut des noms !")
     i : int = 0
     while i!=num_players:
-        players.append(Player(input(f"Nom du joueur {i+1} : "), i+1))       
+        while True:
+            name = input_string(f"Nom du joueur {i+1} : ")
+            if name in [player.name for player in players]:
+                print("Ce nom est déjà pris !")
+            else:
+                break
+        players.append(Player(name, i+1))       
         i+=1
         
     entree: str = ''
-    print("Nombre d' Undercovers et de Mr. Whites...")
-    print("1 - aléatoires")
-    print("2 - à définir")
-    entree = input("Choix : ")
     while True:
+        print("Nombre d' Undercovers et de Mr. Whites...")
+        print("1 - aléatoires")
+        print("2 - à définir")
+        entree = input_string("Choix : ")
         match entree:
             case '1':
                 num_civils = random.randint(2, num_players - 1)
@@ -30,13 +36,13 @@ def first_game():
                 num_mr_whites = num_players - num_civils - num_undercovers
             case '2':
                 while True:
-                    num_undercovers = int(input("Combien y a-t-il de Undercovers ? "))
+                    num_undercovers = input_number("Combien y a-t-il de Undercovers ? ")
                     if num_undercovers > num_players - 2 or num_undercovers < 1:
                         print(f"Nombre de Undercovers incorrect ! Il en faut entre 1 et {num_players - 2}.")
                     else:
                         break
                 while True:
-                    num_mr_whites = int(input("Combien y a-t-il de Mr. Whites ? "))
+                    num_mr_whites = input_number("Combien y a-t-il de Mr. Whites ? ")
                     if num_mr_whites > num_players - num_undercovers - 1 or num_mr_whites < 0:
                         print(f"Nombre de Mr. Whites incorrect ! Il en faut entre 0 et {num_players - num_undercovers - 2}.")
                     else:
@@ -112,7 +118,7 @@ def reset_roles(players):
 
 def phase_elimination(players):
     while True:
-        eliminated_player_name = input("Pour qui souhaitez-vous voter ? ")
+        eliminated_player_name = input_string("Pour qui souhaitez-vous voter ? ")
         if eliminated_player_name in [player.name for player in players]:
             break
         else:
@@ -202,3 +208,22 @@ def score(players):
                 number += 1
     input("Appuyez sur une touche pour continuer...")
     os.system('cls')
+
+def input_number(message):
+    while True:
+        # Si l'entrée n'est pas un nombre, on recommence
+        try:
+            entree = int(input(message))
+        except ValueError:
+            print("Erreur : vous devez entrer un nombre.")
+            continue
+        if entree != "":
+            break
+    return entree
+
+def input_string(message):
+    while True:
+        entree = input(message)
+        if entree != "":
+            break
+    return entree
