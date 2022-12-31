@@ -1,10 +1,9 @@
 from game import *
 from player import *
 
-# Exécution du jeu
 if __name__ == "__main__":
     player_turn_name : str
-    current_game : bool
+    current_active_game : bool
     eliminated_player : Player
     new_game : bool
     keep_playing : bool
@@ -20,22 +19,25 @@ if __name__ == "__main__":
         print("Les préparatifs sont terminés. Le jeu commence !\n")
         while keep_playing:
             reveal_secret_word(players)
-            current_game = True
+            current_active_game = True
             
             # Détermine aléatoirement le joueur qui commence
             i : int = random.randint(1, len(players))
-            while current_game:
+            while current_active_game:
                 for player in players:
                     if player.number == i:
                         player_turn_name = player.name
                 print(f"Phase de discussion. C'est à {player_turn_name} de commencer.\n")
                 eliminated_player = phase_elimination(players)
+                if eliminated_player.role == "Mr. White":
+                    print("Il peut encore gagner s'il trouve le mot secret des Civils.")
+                    eliminated_player.secret_word = input("Quel est le mot secret des Civils ? \n")
                 # Si le joueur éliminé est le joueur qui devait commencer, on passe au joueur suivant
                 if eliminated_player.number == i:
                     i += 1
                     if i > len(players):
                         i = 1
-                current_game = determine_winner(players)
+                current_active_game = determine_winner(players)
             entree: str = ''
             while True:
                 print("1 - Rejouer avec les mêmes paramètres")

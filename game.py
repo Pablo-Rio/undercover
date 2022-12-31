@@ -5,7 +5,12 @@ from player import Player
 
 def first_game():
     players = []
-    num_players = int(input("Combien y a-t-il de joueurs ? "))
+    while True:
+        num_players = int(input("Combien y a-t-il de joueurs ? "))
+        if num_players < 3:
+            print("Il faut au moins 3 joueurs !")
+        else:
+            break
     print(f"{num_players} ? Il me faut des noms !")
     i : int = 0
     while i!=num_players:
@@ -13,8 +18,8 @@ def first_game():
         i+=1
         
     entree: str = ''
-    print("Nombre de civils/undercovers/mr whites...")
-    print("1 - aléatoire")
+    print("Nombre d' Undercovers et de Mr. Whites...")
+    print("1 - aléatoires")
     print("2 - à définir")
     entree = input("Choix : ")
     while True:
@@ -24,15 +29,25 @@ def first_game():
                 num_undercovers = random.randint(1, num_players - num_civils)
                 num_mr_whites = num_players - num_civils - num_undercovers
             case '2':
-                num_civils = int(input("Combien y a-t-il de Civils ? "))
-                num_undercovers = int(input("Combien y a-t-il de Undercovers ? "))
-                num_mr_whites = int(input("Combien y a-t-il de Mr. Whites ? "))
+                while True:
+                    num_undercovers = int(input("Combien y a-t-il de Undercovers ? "))
+                    if num_undercovers > num_players - 2 or num_undercovers < 1:
+                        print(f"Nombre de Undercovers incorrect ! Il en faut entre 1 et {num_players - 2}.")
+                    else:
+                        break
+                while True:
+                    num_mr_whites = int(input("Combien y a-t-il de Mr. Whites ? "))
+                    if num_mr_whites > num_players - num_undercovers - 1 or num_mr_whites < 0:
+                        print(f"Nombre de Mr. Whites incorrect ! Il en faut entre 0 et {num_players - num_undercovers - 2}.")
+                    else:
+                        break
+                num_civils = num_players - num_undercovers - num_mr_whites
             case _:
                 print("Erreur : numéro de menu incorrect.")
         if entree in ['1', '2']:
             break
     game_parameters = [num_players, num_civils, num_undercovers, num_mr_whites]
-    role_allocation(players, game_parameters)
+    players = role_allocation(players, game_parameters)
     return players, game_parameters
 
 
@@ -60,23 +75,21 @@ def role_allocation(players, game_parameters):
         civil_word = 1
     else:
         civil_word = 0
-        
-        
-    for i in range(game_parameters[1]):
-        # On choisit un joueur au hasard, on vérifie qu'il n'est pas déjà Undercover, puis on lui met le rôle de civil et le mot secret associé
-        number = random.randint(0, len(players) - 1)
-        while players[number].role == "Undercover" or players[number].role == "Civil":
-            number = random.randint(0, len(players) - 1)
-        players[number].role = "Civil"
-        players[number].secret_word = secret_word_pair[civil_word]
-        
+    
     for i in range(game_parameters[3]):
         # On choisit un joueur au hasard, on vérifie qu'il n'est pas déjà Undercover ou Civil, puis on lui met le rôle de Mr. White sans lui donner de mot secret
         number = random.randint(0, len(players) - 1)
-        while players[number].role == "Undercover" or players[number].role == "Civil" or players[number].role == "Mr. White":
+        while players[number].role == "Undercover" or players[number].role == "Mr. White":
             number = random.randint(0, len(players) - 1)
         players[number].role = "Mr. White"
         players[number].secret_word = None
+    
+    # On attribue le mot secret civil aux joueurs qui n'ont pas encore de rôle
+    for player in players:
+        if player.role == None:
+            player.role = "Civil"
+            player.secret_word = secret_word_pair[civil_word]
+       
         
     # Déplacer le mot secret utilisé dans le fichier "used_secret_words.txt"
     with open("used_secret_words.txt", "a") as f:
@@ -115,34 +128,45 @@ def determine_winner(players):
     num_undercovers = 0
     num_mr_whites = 0
     for player in players:
+        if player.role == "Civil":
+            civil_secret_word = player.secret_word
+    for player in players:
         if player.role == "Civil" and not player.is_eliminated:
             num_civils += 1
         elif player.role == "Undercover" and not player.is_eliminated:
             num_undercovers += 1
-        elif player.role == "Mr. White" and not player.is_eliminated:
-            num_mr_whites += 1
-    if num_civils == 1 and num_undercovers > 0:
-        print("Les Undercovers ont gagné !")
-        # Donne 10 points aux Undercovers
+        elif player.role == "Mr. White":
+            if not player.is_eliminated:
+                num_mr_whites += 1
+            # Si Mr. White a deviné le mot secret des Civils, alors Mr. White a gagné
+            elif player.secret_word == civil_secret_word and player.is_eliminated:
+                print("Mr. White a gagné !")
+                # Donne 6 points à Mr. White
+                for player in players:
+                    if player.role == "Mr. White":
+                        player.score += 6
+                return False
+            else:
+                print("Raté ! Mr. White a été éliminé.")
+                
+    if num_civils == 1:
+        print("Les Imposteurs ont gagné !")
+        # Donne 10 points à l'Undercover et 6 points à Mr. White
         for player in players:
             if player.role == "Undercover":
                 player.score += 10
-        return False
-    elif num_undercovers == 0 and num_mr_whites > 0:
-        print("Mr. White a gagné !")
-        # Donne 6 points à Mr. White
-        for player in players:
-            if player.role == "Mr. White":
+            elif player.role == "Mr. White":
                 player.score += 6
         return False
-    elif num_undercovers == 0 and num_civils > 0:
+    # Si tous les Imposteurs ont été éliminés, alors les Civils ont gagné
+    elif num_undercovers == 0 and num_mr_whites == 0:
         print("Les Civils ont gagné !")
         # Donne 2 points aux Civils
         for player in players:
             if player.role == "Civil":
                 player.score += 2
         return False
-    else :
+    else:
         print("La partie continue.")
         return True
     
@@ -159,7 +183,6 @@ def reveal_secret_word(players):
                 if player.role == "Mr. White":
                     print("\033[31m" + "Vous êtes Mr. White !" + "\033[0m")
                 else:
-                    # print(player.name, "était un(e)", player.role, player.number,player.secret_word)
                     print('\033[31m' + player.secret_word.upper() + '\033[0m')
                 input("Appuyez sur une touche pour cacher le mot secret...")
                 os.system('cls')
