@@ -28,7 +28,7 @@ if __name__ == "__main__":
                     if player.number == i:
                         player_turn_name = player.name
                 print(f"Phase de discussion. C'est à {player_turn_name} de commencer.\n")
-                eliminated_player = phase_elimination(players)
+                eliminated_player, players = phase_elimination(players)
                 if eliminated_player.role == "Mr. White":
                     print("Il peut encore gagner s'il trouve le mot secret des Civils.")
                     eliminated_player.secret_word = input("Quel est le mot secret des Civils ? \n")

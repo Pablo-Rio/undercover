@@ -67,7 +67,7 @@ def role_allocation(players, game_parameters):
         print("Il n'y a plus de mot secret disponible ! Il faut en ajouter dans le fichier 'secret_words.txt'.")
         os._exit(0)
     
-    players = reset_roles(players)
+    players = reset_roles_and_status(players)
   
     secret_word_pair = secret_words[random.randint(0, len(secret_words) - 1)]
     undercover_word = random.randint(0,1)
@@ -110,9 +110,11 @@ def role_allocation(players, game_parameters):
     return players
 
 
-def reset_roles(players):
+def reset_roles_and_status(players):
     for player in players:
         player.role = None
+        player.secret_word = None
+        player.is_eliminated = False
     return players
 
 
@@ -126,7 +128,7 @@ def phase_elimination(players):
     eliminated_player = next(player for player in players if player.name == eliminated_player_name)
     eliminated_player.eliminate()
     print(f"{eliminated_player.name} était un(e) {eliminated_player.role} !")
-    return eliminated_player
+    return eliminated_player, players
     
 
 def determine_winner(players):
@@ -154,14 +156,21 @@ def determine_winner(players):
                 return False
             else:
                 print("Raté ! Mr. White a été éliminé.")
-                
-    if num_civils == 1:
-        print("Les Imposteurs ont gagné !")
-        # Donne 10 points à l'Undercover et 6 points à Mr. White
+    
+    # print("Test : il reste", num_civils, "Civils,", num_undercovers, "Undercovers et", num_mr_whites, "Mr. White.")
+    
+    if num_civils == 1 and num_mr_whites == 0 and num_undercovers > 0:
+        print("Les Undercovers ont gagné !")
+        # Donne 10 points aux Undercovers
         for player in players:
             if player.role == "Undercover":
                 player.score += 10
-            elif player.role == "Mr. White":
+        return False
+    elif num_undercovers == 0 and num_civils == 1 and num_mr_whites > 0:
+        print("Mr. White a gagné !")
+        # Donne 6 points à Mr. White
+        for player in players:
+            if player.role == "Mr. White":
                 player.score += 6
         return False
     # Si tous les Imposteurs ont été éliminés, alors les Civils ont gagné
